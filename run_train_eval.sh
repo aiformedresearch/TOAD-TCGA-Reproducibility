@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Container runtime portability:
+# - Some systems use 'apptainer' instead of 'singularity'.
+# - If $RUNTIME is not set, auto-detect apptainer first, then singularity.
+RUNTIME="${RUNTIME:-}"
+if [[ -z "$RUNTIME" ]]; then
+  if command -v apptainer >/dev/null 2>&1; then
+    RUNTIME="apptainer"
+  elif command -v singularity >/dev/null 2>&1; then
+    RUNTIME="singularity"
+  else
+    echo "ERROR: neither 'apptainer' nor 'singularity' found in PATH."
+    echo "Install one of them, or set RUNTIME=/full/path/to/apptainer (or singularity)."
+    exit 1
+  fi
+fi
+
 label_frac_list=(0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0)
 GPU=0
 
@@ -13,7 +29,8 @@ LOCAL_TOAD_CODE_DIR="$LOCAL_BASE_DIR/src_train_eval"
 LOCAL_SINGULARITY_IMAGE="$LOCAL_BASE_DIR/assets/containers/singularity_train_eval.simg"
 
 # Path to preprocessing_output/FEATURES (contains pt_files/, h5_files/)
-LOCAL_FEATURES_DIR="$LOCAL_BASE_DIR/output/preprocessing_output/FEATURES"
+# Provide explicitly via --features when running.
+LOCAL_FEATURES_DIR="$LOCAL_BASE_DIR/preprocessing_output/FEATURES"
 
 usage() {
   cat <<EOF
@@ -26,6 +43,9 @@ Required:
 Optional:
   --gpu        GPU id to expose inside container (default: 0)
   --image      Container image path
+
+Runtime:
+  RUNTIME=apptainer   (or RUNTIME=singularity) to force a specific runtime.
 EOF
 }
 
@@ -59,11 +79,12 @@ RESULTS_REALPATH="$(readlink -f "$LOCAL_RESULTS_ROOT")"
 IMAGE_REALPATH="$(readlink -f "$LOCAL_SINGULARITY_IMAGE")"
 
 echo "=== Train/Eval runs (SEQUENTIAL) ==="
-echo "Host code dir:   $TOAD_CODE_REALPATH   (will be /app/TOAD_repo inside container)"
+echo "Host code dir:   $TOAD_CODE_REALPATH   (bind-mounted as /app/TOAD_repo)"
 echo "Container image: $IMAGE_REALPATH"
 echo "Features dir:    $FEATURES_REALPATH"
 echo "Results root:    $RESULTS_REALPATH"
 echo "GPU:             $GPU"
+echo "Runtime:         $RUNTIME"
 echo
 
 for LABEL_FRAC in "${label_frac_list[@]}"; do
@@ -94,6 +115,7 @@ PY
     echo "label_frac_input: ${LABEL_FRAC}"
     echo "label_pct_int: ${LABEL_PCT}"
     echo "gpu: ${GPU}"
+    echo "runtime: ${RUNTIME}"
     echo "container_image: ${IMAGE_REALPATH}"
     echo "features_dir: ${FEATURES_REALPATH}"
     echo "host_code_dir: ${TOAD_CODE_REALPATH}"
@@ -106,16 +128,7 @@ PY
   export SINGULARITYENV_CUDA_VISIBLE_DEVICES="$GPU"
   export APPTAINERENV_CUDA_VISIBLE_DEVICES="$GPU"
 
-  singularity exec --nv \
-    --bind "$TOAD_CODE_REALPATH:/app/TOAD_repo:ro" \
-    --bind "$LOCAL_EVAL_RESULTS_DIR:/app/TOAD_repo/eval_results" \
-    --bind "$FEATURES_REALPATH:/app/data/FEATURES:ro" \
-    --bind "$LOCAL_RESULTS_DIR:/app/results" \
-    --bind "$LOCAL_SPLITS_DIR:/app/TOAD_repo/splits" \
-    --containall \
-    "$IMAGE_REALPATH" \
-    /bin/bash -lc 'cd /app/TOAD_repo && bash run_python_scripts.sh "$1" "$2"' -- "$LABEL_FRAC" "$GPU" \
-    > "${log_file_name}" 2>&1
+  "$RUNTIME" exec --nv     --bind "$TOAD_CODE_REALPATH:/app/TOAD_repo:ro"     --bind "$LOCAL_EVAL_RESULTS_DIR:/app/TOAD_repo/eval_results"     --bind "$FEATURES_REALPATH:/app/data/FEATURES:ro"     --bind "$LOCAL_RESULTS_DIR:/app/results"     --bind "$LOCAL_SPLITS_DIR:/app/TOAD_repo/splits"     --containall     "$IMAGE_REALPATH"     /bin/bash -lc 'cd /app/TOAD_repo && bash run_python_scripts.sh "$1" "$2"' -- "$LABEL_FRAC" "$GPU"     > "${log_file_name}" 2>&1
 
   echo "Run completed: ${LOCAL_RESULTS_folder_name}"
   echo

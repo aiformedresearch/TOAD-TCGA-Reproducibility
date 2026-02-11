@@ -3,6 +3,22 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Container runtime portability:
+# - Some systems use 'apptainer' instead of 'singularity'.
+# - If $RUNTIME is not set, auto-detect apptainer first, then singularity.
+RUNTIME="${RUNTIME:-}"
+if [[ -z "$RUNTIME" ]]; then
+  if command -v apptainer >/dev/null 2>&1; then
+    RUNTIME="apptainer"
+  elif command -v singularity >/dev/null 2>&1; then
+    RUNTIME="singularity"
+  else
+    echo "ERROR: neither 'apptainer' nor 'singularity' found in PATH."
+    echo "Install one of them, or set RUNTIME=/full/path/to/apptainer (or singularity)."
+    exit 1
+  fi
+fi
+
 SIMG_DEFAULT="$SCRIPT_DIR/assets/containers/singularity_preprocessing.simg"
 CODE_DEFAULT="$SCRIPT_DIR/src_preprocessing/CLAM_encoder"
 
@@ -10,7 +26,11 @@ INPUT_DIR=""
 OUT_ROOT=""
 GPU="0"
 BATCH_SIZE="800"
-ENCODER=uni_v1 #"resnet50_trunc"
+
+# Default encoder: UNI (best-performing in our experiments).
+# Users without UNI access can override with: --encoder resnet50_trunc
+ENCODER=uni_v1  # "resnet50_trunc"
+
 TARGET_PATCH_SIZE="224"
 MAXDEPTH="2"
 JOBS="1"
@@ -22,7 +42,7 @@ Usage:
 
 Required:
   --input-dir   Folder containing .svs files (searched up to depth ${MAXDEPTH})
-  --out-root    preprocessing_output folder
+  --out-root    Output folder for preprocessing results
 
 Options:
   --gpu               GPU id (default: ${GPU})
@@ -31,8 +51,11 @@ Options:
   --encoder           resnet50_trunc | uni_v1 | conch_v1 (default: ${ENCODER})
   --target-patch-size Target patch size (default: ${TARGET_PATCH_SIZE})
   --maxdepth          Search depth (default: ${MAXDEPTH})
-  --image             Singularity image path (default: ${SIMG_DEFAULT})
+  --image             Container image path (default: ${SIMG_DEFAULT})
   --code              CLAM code folder (default: ${CODE_DEFAULT})
+
+Runtime:
+  RUNTIME=apptainer   (or RUNTIME=singularity) to force a specific runtime.
 EOF
 }
 
@@ -108,17 +131,10 @@ run_one() {
   echo "Processing: $svs_real"
   echo "Meta out:   $meta_dir"
   echo "Features:   $FEATURES_ROOT"
+  echo "Runtime:    $RUNTIME"
+  echo "Encoder:    $ENCODER"
 
-  singularity exec --nv --cleanenv --containall \
-    --bind "$CODE_REAL:/app/CLAM:ro" \
-    --bind "$tmp_in:/app/input_data" \
-    --bind "$svs_real:/app/input_data/$slide_file:ro" \
-    --bind "$meta_dir:/app/meta_out" \
-    --bind "$FEATURES_ROOT:/app/features_out" \
-    "$SIMG_REAL" \
-    bash -lc 'cd /app/CLAM && bash run_clam_single_input.sh /app/input_data /app/meta_out /app/features_out "$1" "$2" "$3" "$4"' \
-    -- "$slide_file" "$BATCH_SIZE" "$ENCODER" "$TARGET_PATCH_SIZE" \
-    > "$meta_dir/run.log" 2>&1
+  "$RUNTIME" exec --nv --cleanenv --containall     --bind "$CODE_REAL:/app/CLAM:ro"     --bind "$tmp_in:/app/input_data"     --bind "$svs_real:/app/input_data/$slide_file:ro"     --bind "$meta_dir:/app/meta_out"     --bind "$FEATURES_ROOT:/app/features_out"     "$SIMG_REAL"     bash -lc 'cd /app/CLAM && bash run_clam_single_input.sh /app/input_data /app/meta_out /app/features_out "$1" "$2" "$3" "$4"'     -- "$slide_file" "$BATCH_SIZE" "$ENCODER" "$TARGET_PATCH_SIZE"     > "$meta_dir/run.log" 2>&1
 
   rm -rf "$tmp_in"
 }

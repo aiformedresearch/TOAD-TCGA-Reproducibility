@@ -1,15 +1,15 @@
 # TOAD-TCGA-Reproducibility
 
-A fully reproducible evaluation of **Tumor Origin Assessment via Deep Learning (TOAD)** on **TCGA whole-slide images (WSI)**, with learning curves that quantify how performance scales as training data is reduced.
+A fully reproducible evaluation of **Tumor Origin Assessment via Deep Learning (TOAD)** on **TCGA whole-slide images (WSI)**, with learning curves to study how performance scales as training data is reduced.
 
 This repository provides:
 - **Containerized preprocessing** (WSI patching + feature extraction)
 - **Containerized training/evaluation** with a **learning-curve runner** (x% training data)
 - A **local inference GUI** for running the TCGA-trained model on a slide and exporting JSON summaries
 
-## Why this exists
+## Purpose
 
-Deep learning models for cancer histopathology are increasingly used to classify the primary site of origin, yet many approaches are difficult to reproduce because trained models and/or training data are not fully accessible. Here, we provide a **TCGA-only** reproduction of TOAD and a systematic evaluation across data regimes (learning curves), including an encoder comparison between **ResNet-50** and **UNI**.
+Deep learning models for cancer histopathology are increasingly used to classify the primary site of origin, yet many approaches are difficult to reproduce because trained models and/or training data are not fully accessible. Here, we provide a **TCGA-only** reproduction of TOAD and a systematic evaluation across data regimes (learning curves), including an encoder comparison between **ResNet-50** (pretrained with supervised learning on Imagenet) and **UNI** (a foundation model pretrained with self-supervised learning on histopathological images https://github.com/mahmoodlab/UNI).
 
 ---
 
@@ -35,19 +35,8 @@ Slides must be obtained from the **GDC portal** / **GDC Data Transfer Tool** usi
 
 - `src_preprocessing/CLAM_encoder/dataset_csv/TCGA.csv`
 
-### Step 1 — Inspect which column contains the GDC file IDs
-From the repo root:
-```bash
-python3 - <<'PY'
-import pandas as pd
-p = "src_preprocessing/CLAM_encoder/dataset_csv/TCGA.csv"
-df = pd.read_csv(p)
-print("Columns:", list(df.columns))
-print(df.head(2))
-PY
-```
 
-### Step 2 — Export file IDs to a text file
+### Step 1 — Export file IDs to a text file
 Replace `FILE_ID_COL` below with the correct column name you saw in Step 1 (commonly something like `file_id`):
 ```bash
 FILE_ID_COL="file_id"  # <-- edit this
@@ -63,7 +52,7 @@ print("Wrote gdc_file_ids.txt with", df[col].notna().sum(), "IDs")
 PY
 ```
 
-### Step 3 — Download slides with the GDC Data Transfer Tool (`gdc-client`)
+### Step 2 — Download slides with the GDC Data Transfer Tool (`gdc-client`)
 Using `xargs` avoids very long command lines:
 ```bash
 # Create an output folder for downloaded slides
@@ -88,7 +77,7 @@ Large artifacts are **not** stored in git. You will download them from Zenodo an
 **Public trained model weights (ResNet-based)**
 - `assets/inference_model_checkpoint/<your_model_file>.pt`
 
-**Zenodo DOI:** _TODO (add after publishing)_
+**Zenodo DOI:** https://doi.org/10.5281/zenodo.18535256
 
 Recommended: verify integrity using `SHA256SUMS` from Zenodo:
 ```bash
@@ -119,7 +108,6 @@ This script searches for `.svs` under `--input-dir` up to `--maxdepth` and creat
 - `<out-root>/FEATURES/` (feature files)
 
 **Default encoder:** `uni_v1` (best-performing in our study).  
-If you do not have UNI access, use `--encoder resnet50_trunc`.
 
 ```bash
 bash run_preprocessing.sh   --input-dir /abs/path/to/svs_folder_or_tree   --out-root  /abs/path/to/preprocessing_output   --gpu 0
@@ -197,7 +185,7 @@ rg -n "weights|model|\.pt|checkpoint" src_inference_GUI/*.py
 
 ### Model weights license
 - Public **ResNet-based** trained TOAD weights are released under **AGPL-3.0**.
-- UNI-based trained weights are not distributed (see “Model and feature availability”).
+- UNI-based trained weights are not distributed (see https://github.com/mahmoodlab/UNI).
 
 ---
 
