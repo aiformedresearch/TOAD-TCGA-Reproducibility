@@ -17,15 +17,7 @@ Deep learning models for cancer histopathology are increasingly used to classify
 
 ### Trained model weights
 - ✅ **Publicly released weights (via Zenodo):** **ResNet-based TOAD trained model weights** (AGPL-3.0).
-- ❌ **Not released:** **UNI-based TOAD trained model weights**.
-
-**Why UNI-based trained weights are not released:** the **UNI** encoder is distributed under terms that restrict redistribution. To respect those terms, we do **not** upload or bundle UNI model files, nor the trained TOAD weights that depend on UNI features.
-
-> You can still run UNI-based experiments: if you have approved UNI access, you can download UNI through the official channel and reproduce the UNI-based variant using this repository’s scripts.
-
-### Extracted features
-- ❌ **We do not distribute extracted feature files** (neither ResNet nor UNI features).  
-  Feature files can be very large and are derived from WSI data; instead, this repository provides **reproducible preprocessing** so you can generate features locally from TCGA slides.
+- ❌ **Not released:** **UNI-based TOAD trained model weights**, the encoder is distributed under terms that restrict redistribution, but is available here: https://github.com/mahmoodlab/UNI.
 
 ---
 
@@ -35,31 +27,6 @@ Slides must be obtained from the **GDC portal** / **GDC Data Transfer Tool** usi
 
 - `src_preprocessing/CLAM_encoder/dataset_csv/TCGA.csv`
 
-
-### Step 1 — Export file IDs to a text file
-Replace `FILE_ID_COL` below with the correct column name you saw in Step 1 (commonly something like `file_id`):
-```bash
-FILE_ID_COL="file_id"  # <-- edit this
-
-python3 - <<PY
-import pandas as pd, os
-p = "src_preprocessing/CLAM_encoder/dataset_csv/TCGA.csv"
-col = os.environ["FILE_ID_COL"]
-df = pd.read_csv(p)
-assert col in df.columns, f"Column '{col}' not found. Available: {list(df.columns)}"
-df[col].dropna().astype(str).to_csv("gdc_file_ids.txt", index=False, header=False)
-print("Wrote gdc_file_ids.txt with", df[col].notna().sum(), "IDs")
-PY
-```
-
-### Step 2 — Download slides with the GDC Data Transfer Tool (`gdc-client`)
-Using `xargs` avoids very long command lines:
-```bash
-# Create an output folder for downloaded slides
-mkdir -p tcga_svs
-
-# Download each file ID
-cat gdc_file_ids.txt | xargs -n 1 -P 4 gdc-client download --no-related-files --dir tcga_svs
 ```
 
 After download, point preprocessing to the folder containing the `.svs` files (or a folder tree that contains them).
@@ -107,18 +74,14 @@ This script searches for `.svs` under `--input-dir` up to `--maxdepth` and creat
 - `<out-root>/logs_and_metadata/` (per-slide logs + extracted metadata)
 - `<out-root>/FEATURES/` (feature files)
 
-**Default encoder:** `uni_v1` (best-performing in our study).  
+**Default encoder:** `resnet50_trunc` 
 
 ```bash
 bash run_preprocessing.sh   --input-dir /abs/path/to/svs_folder_or_tree   --out-root  /abs/path/to/preprocessing_output   --gpu 0
 ```
 
-Example using ResNet features:
-```bash
-bash run_preprocessing.sh   --input-dir /abs/path/to/svs_folder_or_tree   --out-root  /abs/path/to/preprocessing_output   --encoder resnet50_trunc   --gpu 0
-```
-
 Useful options:
+- `--encoder` uni_v1 or resnet50_trunc (To use UNI encoder follow the instructions: https://github.com/mahmoodlab/CLAM?tab=readme-ov-file#using-conch--uni-as-pretrained-encoder)
 - `--jobs` parallel slides on the same GPU
 - `--batch-size` feature extraction batch size (default 800)
 - `--target-patch-size` patch size (default 224)
@@ -140,6 +103,8 @@ bash run_train_eval.sh   --features /abs/path/to/preprocessing_output/FEATURES  
 > - ResNet features → train/eval a ResNet-feature model (public weights distributed)
 
 ### 3) Inference GUI (local)
+
+<img src="./docs/GUI_example.png" alt="Example of the Inference GUI" width="800">
 
 Launch the GUI (default port 8765):
 ```bash

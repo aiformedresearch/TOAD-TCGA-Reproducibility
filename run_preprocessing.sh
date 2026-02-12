@@ -20,16 +20,14 @@ if [[ -z "$RUNTIME" ]]; then
 fi
 
 SIMG_DEFAULT="$SCRIPT_DIR/assets/containers/singularity_preprocessing.simg"
-CODE_DEFAULT="$SCRIPT_DIR/src_preprocessing/CLAM_encoder"
+CODE_DEFAULT="$SCRIPT_DIR/src_preprocessing"
 
 INPUT_DIR=""
 OUT_ROOT=""
 GPU="0"
 BATCH_SIZE="800"
 
-# Default encoder: UNI (best-performing in our experiments).
-# Users without UNI access can override with: --encoder resnet50_trunc
-ENCODER=uni_v1  # "resnet50_trunc"
+ENCODER=resnet50_trunc #uni_v1 
 
 TARGET_PATCH_SIZE="224"
 MAXDEPTH="2"

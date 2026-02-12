@@ -18,9 +18,10 @@ This repository includes code derived from third-party open-source projects.
 - Upstream: https://github.com/mahmoodlab/CLAM
 - License: GPL-3.0 (see licenses/CLAM_GPL-3.0.txt)
 - Notes: This repository includes a subset of CLAM code used for preprocessing.
+- Included components: only scripts for WSI patching and feature extraction. Exclusion of the classifier training scripts.
+
 
 ## Notes
 - This repository is distributed under the GNU Affero General Public License v3.0 (AGPL-3.0). See LICENSE.
 - Copyright and license headers from upstream-derived files should be preserved.
-EOF
 

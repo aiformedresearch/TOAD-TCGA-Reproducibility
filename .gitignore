@@ -104,3 +104,7 @@ preprocessing_output/
 **/models--MahmoodLab--UNI*
 **/models--MahmoodLab--UNI2-h*
 **/.cache/
+
+# exception:
+!src_preprocessing/models/resnet50_trunc.pth
+!docs/GUI_example.png
