@@ -25,7 +25,7 @@ Deep learning models for cancer histopathology are increasingly used to classify
 
 Slides must be obtained from the **GDC portal** / **GDC Data Transfer Tool** using the **GDC file IDs** listed in:
 
-- `src_preprocessing/CLAM_encoder/dataset_csv/TCGA.csv`
+- `src_preprocessing/dataset_csv/TCGA.csv`
 
 ```
 
@@ -77,7 +77,7 @@ This script searches for `.svs` under `--input-dir` up to `--maxdepth` and creat
 **Default encoder:** `resnet50_trunc` 
 
 ```bash
-bash run_preprocessing.sh   --input-dir /abs/path/to/svs_folder_or_tree   --out-root  /abs/path/to/preprocessing_output   --gpu 0
+RUNTIME=singularity bash run_preprocessing.sh   --input-dir /abs/path/to/svs_folder_or_tree   --out-root  /abs/path/to/preprocessing_output   --gpu 0
 ```
 
 Useful options:
@@ -87,7 +87,7 @@ Useful options:
 - `--target-patch-size` patch size (default 224)
 - `--maxdepth` search depth (default 2)
 - `--image` preprocessing container path (default `assets/containers/singularity_preprocessing.simg`)
-- `--code` preprocessing code path (default `src_preprocessing/CLAM_encoder`)
+- `--code` preprocessing code path (default `src_preprocessing/`)
 
 ### 2) Training & evaluation (FEATURES → learning curves)
 
@@ -95,7 +95,7 @@ Runs training and evaluation for multiple training-data fractions (configured in
 - `train_eval_output/RESULTS_EXP_*/`
 
 ```bash
-bash run_train_eval.sh   --features /abs/path/to/preprocessing_output/FEATURES   --gpu 0
+RUNTIME=singularity bash run_train_eval.sh   --features /abs/path/to/preprocessing_output/FEATURES   --gpu 0
 ```
 
 > **Important:** the encoder used for feature extraction must match what you train/evaluate on.
@@ -131,7 +131,7 @@ rg -n "weights|model|\.pt|checkpoint" src_inference_GUI/*.py
 - `run_preprocessing.sh` — containerized preprocessing
 - `run_train_eval.sh` — containerized learning-curve training/eval
 - `run_inference_GUI.sh` — run local GUI
-- `src_preprocessing/CLAM_encoder/` — preprocessing subset (derived from CLAM)
+- `src_preprocessing/` — preprocessing subset (derived from CLAM)
 - `src_train_eval/` — train/eval code (derived from TOAD + modifications)
 - `src_inference_GUI/` — local GUI + inference logic
 - `assets/containers/` — container build recipes (Dockerfiles)
