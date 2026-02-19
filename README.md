@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1234567.svg)](https://doi.org/10.5281/zenodo.1234567)
+
 # TOAD-TCGA-Reproducibility
 
 A fully reproducible evaluation of **Tumor Origin Assessment via Deep Learning (TOAD)** on **TCGA whole-slide images (WSI)**, with learning curves to study how performance scales as training data is reduced.
@@ -10,6 +12,13 @@ This repository provides:
 ## Purpose
 
 Deep learning models for cancer histopathology are increasingly used to classify the primary site of origin, yet many approaches are difficult to reproduce because trained models and/or training data are not fully accessible. Here, we provide a **TCGA-only** reproduction of TOAD and a systematic evaluation across data regimes (learning curves), including an encoder comparison between **ResNet-50** (pretrained with supervised learning on Imagenet) and **UNI** (a foundation model pretrained with self-supervised learning on histopathological images https://github.com/mahmoodlab/UNI).
+
+## Citation
+This repository is archived on Zenodo: https://doi.org/10.5281/zenodo.1234567
+
+If you use this code, please cite the Zenodo record. This repository accompanies the manuscript
+“Reproducible open-data training and evaluation of the TOAD framework for tumor origin classification”
+(submitted; under review at PLOS Digital Health).
 
 ---
 
