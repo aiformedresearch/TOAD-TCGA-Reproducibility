@@ -156,8 +156,8 @@ rg -n "weights|model|\.pt|checkpoint" src_inference_GUI/*.py
 - See `THIRD_PARTY_NOTICES.md` and `licenses/` for full details.
 
 ### Model weights license
-- Public **ResNet-based** trained TOAD weights are released under **AGPL-3.0**.
-- UNI-based trained weights are not distributed (see https://github.com/mahmoodlab/UNI).
+- Public **ResNet-based** trained TOAD weights are released under **AGPL-3.0**
+- UNI-based trained weights are not distributed (see https://github.com/mahmoodlab/UNI)
 
 ---
 
