@@ -13,7 +13,7 @@ authors:
   - given-names: "Stefano"
     family-names: "Diciotti"
 repository-code: "https://github.com/aiformedresearch/TOAD-TCGA-Reproducibility"
-
+doi: "https://doi.org/10.5281/zenodo.18689422"
 references:
   - type: article
     title: "Reproducible open-data training and evaluation of the TOAD framework for tumor origin classification"
